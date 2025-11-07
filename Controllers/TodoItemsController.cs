@@ -1,35 +1,36 @@
-//using ... 請去recap C++課 引入容器、資料夾
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PXPayBackend.Data;
 using PXPayBackend.Models;
-using System.Collections.Generic;
-using System.Linq;
-
 
 namespace PXPayBackend.Controllers
 {
- [ApiController] //告訴.NET 這是 API Controller 
-    [Route("api/[controller]")] 
-    //inheritance
+    [ApiController]
+    [Route("api/[controller]")]
     public class TodoItemsController : ControllerBase
-    { //static 共享這個數據_todos
-        private static readonly List<TodoItem> _todos = new List<TodoItem>
+    {
+        // IOC/DI 核心！不再用 static List，改用 DbContext
+        private readonly TodoContext _context;
+
+        // Constructor（建構子）- 接收 IOC 注入的 DbContext
+        public TodoItemsController(TodoContext context)
         {
-            new TodoItem { Id = 1, Name = "學習 C#", IsComplete = false },
-            new TodoItem { Id = 2, Name = "準備面試", IsComplete = false }
-        };
+            _context = context;
+        }
         
         // GET /api/todoitems
         [HttpGet]
-         public ActionResult<IEnumerable<TodoItem>> GetTodoItems()
-         {
-            return _todos;
-         }
-
-        //GET /api/todoitems/{id}
-        [HttpGet("{id}")]
-          public ActionResult<TodoItem> GetTodoItem(long id)
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItems()
         {
-            var todoItem = _todos.Find(x => x.Id == id);
+            return await _context.TodoItems.ToListAsync();
+        }
+
+        // GET /api/todoitems/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<TodoItem>> GetTodoItem(long id)
+        {
+            // LINQ & Lambda（改成查詢資料庫）
+            var todoItem = await _context.TodoItems.FindAsync(id);
             
             if (todoItem == null)
             {
@@ -38,49 +39,65 @@ namespace PXPayBackend.Controllers
             
             return todoItem;
         }
+
         // POST /api/todoitems
         [HttpPost]
-        public ActionResult<TodoItem> PostTodoItem(TodoItem todoItem)
+        public async Task<ActionResult<TodoItem>> PostTodoItem(TodoItem todoItem)
         {
-            long nextId = (_todos.Count > 0) ? _todos.Max(x => x.Id) + 1 : 1;
-            todoItem.Id = nextId;
-            _todos.Add(todoItem);
+            // 直接加入 DbContext（Id 會自動生成）
+            _context.TodoItems.Add(todoItem);
+            await _context.SaveChangesAsync();
+            
             return CreatedAtAction(nameof(GetTodoItem), new { id = todoItem.Id }, todoItem);
         }
 
         // PUT /api/todoitems/{id}
         [HttpPut("{id}")]
-        public IActionResult PutTodoItem(long id, TodoItem todoItem)
+        public async Task<IActionResult> PutTodoItem(long id, TodoItem todoItem)
         {
             if (id != todoItem.Id)
             {
                 return BadRequest();
             }
 
-            var existingItem = _todos.Find(x => x.Id == id);
-            if (existingItem == null)
-            {
-                return NotFound();
-            }
+            _context.Entry(todoItem).State = EntityState.Modified;
 
-            existingItem.Name = todoItem.Name;
-            existingItem.IsComplete = todoItem.IsComplete;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await TodoItemExists(id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
 
             return NoContent();
         }
 
         // DELETE /api/todoitems/{id}
         [HttpDelete("{id}")]
-        public IActionResult DeleteTodoItem(long id)
+        public async Task<IActionResult> DeleteTodoItem(long id)
         {
-            var todoItem = _todos.Find(x => x.Id == id);
+            var todoItem = await _context.TodoItems.FindAsync(id);
             if (todoItem == null)
             {
                 return NotFound();
             }
 
-            _todos.Remove(todoItem);
+            _context.TodoItems.Remove(todoItem);
+            await _context.SaveChangesAsync();
+
             return NoContent();
+        }
+
+        // Helper method
+        private async Task<bool> TodoItemExists(long id)
+        {
+            return await _context.TodoItems.AnyAsync(e => e.Id == id);
         }
 
     }
