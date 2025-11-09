@@ -6,15 +6,15 @@ image: mcr.microsoft.com/dotnet/sdk:8.0
 
 # 定義 CI/CD 的階段（按順序執行）
 stages:
-  - build    # 第一階段：編譯
-  - test     # 第二階段：測試
+  - build # 第一階段：編譯
+  - test # 第二階段：測試
 
 # 全域變數
 variables:
   # 設定 NuGet 套件快取路徑（加速建置）
-  NUGET_PACKAGES_DIRECTORY: '.nuget'
+  NUGET_PACKAGES_DIRECTORY: ".nuget"
   # 設定建置組態為 Release
-  BUILD_CONFIGURATION: 'Release'
+  BUILD_CONFIGURATION: "Release"
 
 # 快取設定（加速後續建置）
 cache:
@@ -96,4 +96,3 @@ after_script:
   - echo "專案：$CI_PROJECT_NAME"
   - echo "分支：$CI_COMMIT_REF_NAME"
   - echo "提交：$CI_COMMIT_SHORT_SHA"
-

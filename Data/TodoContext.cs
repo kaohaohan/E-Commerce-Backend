@@ -4,20 +4,21 @@ using PXPayBackend.Models;
 
 namespace PXPayBackend.Data
 {
-    // 讓我們的 TodoContext 繼承 (inherit) .NET 內建的 DbContext
-    // 就像 Mongoose 的 connection + schema 的集合體
+    // 讓我們的 TodoContext 繼承  .NET 內建的 DbContext
+    // 就像 Mongoose 的 connection + schema 的集合體 
+    
     public class TodoContext : DbContext
     {
         // Constructor (建構子)
-        // 接收 DbContextOptions，這是 IOC/DI 注入的關鍵
+        // 接收 DbContext Options，
         public TodoContext(DbContextOptions<TodoContext> options)
             : base(options)
         {
         }
 
-        // DbSet 代表資料庫中的一張表
-        // DbSet<TodoItem> 就是 TodoItems 表
+        // DbSet 定義表
         // 就像 Mongoose 的 model('Todo', todoSchema)
+        //TodoItems 型別是 DbSet<TodoItem>所以可以提供查詢方法
         public DbSet<TodoItem> TodoItems { get; set; } = null!;
     }
 }
