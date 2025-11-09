@@ -12,7 +12,7 @@ namespace PXPayBackend.Controllers
         // IOC/DI 核心！不再用 static List，改用 DbContext
         private readonly TodoContext _context;
 
-        // Constructor（建構子）- 接收 IOC 注入的 DbContext
+        // Constructor- 接收 IOC 注入的 DbContext
         public TodoItemsController(TodoContext context)
         {
             _context = context;
@@ -93,6 +93,74 @@ namespace PXPayBackend.Controllers
 
             return NoContent();
         }
+        
+        // DELETE: /api/todoitems/batch
+        // 批次刪除 - 展示 Transaction (ACID)
+        //從request body 接收 一包 id 
+   [HttpDelete("batch")]
+public async Task<IActionResult> DeleteBatch([FromBody] long[] ids)
+{
+    // 🖨️ 1. Print 收到的 ids
+    Console.WriteLine($" 收到的 ids: {string.Join(", ", ids)}");
+    //using 語法糖, 是用來自動釋放"非託管"資源(資料庫連線)，在這下面區塊 會自動呼叫物件 Dispose() 確保資源被釋放，換句話說transaction 可以被正確關閉釋放資料庫連線避免資源洩漏
+
+    using (var transaction = await _context.Database.BeginTransactionAsync())
+    {
+        try
+        {
+        //新增一個list裝 ids 
+         var itemsToDelete = new List<TodoItem>();
+
+        foreach (var id in ids)
+        {
+            var item = await _context.TodoItems.FindAsync(id);
+
+            //找到每個id 的資料
+          if (item != null)
+        {
+            // 🖨️ Print 找到的 item
+            Console.WriteLine($" 找到 id={item.Id}, Name={item.Name}, IsComplete={item.IsComplete}");
+            
+            // 加入 List
+            itemsToDelete.Add(item);
+            
+            // 🖨️ Print 目前 List 有幾筆
+            Console.WriteLine($"📦 itemsToDelete 現在有 {itemsToDelete.Count} 筆資料");
+        }
+        else
+        {
+            Console.WriteLine($" id={id} 不存在");
+        }
+
+        }
+        
+        //刪除整包itemsToDelete
+        _context.TodoItems.RemoveRange(itemsToDelete);
+        //產生SQL語句  執行上面的刪除 但它其實沒真的刪除 目前還在   Transaction 暫存區
+        //像是git commit 
+        await _context.SaveChangesAsync();
+
+        // 真正提交transaction 永久保存DB
+        //像是git push 
+        await transaction.CommitAsync();
+         Console.WriteLine(" 批次删除成功！");
+        return NoContent(); // 204
+    
+        }catch (Exception ex)
+        {
+              // Rollback 
+              await transaction.RollbackAsync();
+              Console.WriteLine($" 刪除失敗: {ex.Message}");
+              return BadRequest(new { error = ex.Message });
+              
+
+        }
+        
+    }
+
+    
+}
+
 
         // Helper method
         private async Task<bool> TodoItemExists(long id)
@@ -106,6 +174,8 @@ namespace PXPayBackend.Controllers
 
 /* 
 筆記：
+一開始用static List ？
+因為沒有數據庫...不寫static 每次HTTP請求 都要創一新的controller 要確保這物件只要做一次就好(Singleton)
 
 1. 複習node.js路由
 router.get('/', (req, res) => {
