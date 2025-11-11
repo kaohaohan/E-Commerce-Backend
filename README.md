@@ -1,10 +1,8 @@
-# E-Commerce-Backend - 高流量電商後端系統
+# PXPayBackend - .NET Core Web API
 
-這是我用 ASP.NET Core 開發的電商後端 API，專注在**高流量場景的效能優化**和**安全防護**，展示企業級後端開發的核心技術。
+這是我用 ASP.NET Core 開發的後端 API 專案，展示企業級後端開發的核心技術。
 
 > 🚀 **技術亮點**：Memory Cache 效能優化、ACID Transaction、Rate Limiting、CI/CD 自動化部署
-
-> 💡 **適用場景**：雙 11 搶購活動、高併發商品查詢、訂單交易處理、API 安全防護
 
 ## 環境需求
 
@@ -25,8 +23,8 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
 ### 2. Clone 專案並還原套件
 
 ```bash
-git clone https://github.com/kaohaohan/E-Commerce-Backend.git
-cd E-Commerce-Backend
+git clone https://github.com/kaohaohan/PXPayBackend.git
+cd PXPayBackend
 dotnet restore
 ```
 
@@ -50,52 +48,44 @@ http://localhost:5000/swagger
 
 ## API 功能
 
-### 商品管理 API（高流量優化）
+### Products API（Cache 優化）
 
-- `GET /api/products/stock` - 查詢商品庫存（有 Cache，效能提升 10,000 倍）
+- `GET /api/products/stock` - 查詢庫存（有 Cache）
 - `GET /api/products/stock/no-cache` - 查詢庫存（沒有 Cache，用來對比）
 - `POST /api/products/init` - 初始化測試資料
 
-**適用場景：** 雙 11 搶購活動、10 萬人同時查詢庫存
+### TodoItems API（CRUD + Transaction）
 
----
-
-### 訂單管理 API（交易處理）
-
-- `GET /api/todoitems` - 查詢所有訂單
-- `GET /api/todoitems/{id}` - 查詢單筆訂單
-- `POST /api/todoitems` - 建立訂單
-- `PUT /api/todoitems/{id}` - 更新訂單狀態
-- `DELETE /api/todoitems/{id}` - 取消單筆訂單
-- `DELETE /api/todoitems/batch` - 批次取消訂單（ACID Transaction）
-
-**適用場景：** 訂單處理、退款流程、確保資料一致性
-
----
+- `GET /api/todoitems` - 查詢所有項目
+- `GET /api/todoitems/{id}` - 查詢單筆項目
+- `POST /api/todoitems` - 新增項目
+- `PUT /api/todoitems/{id}` - 更新項目
+- `DELETE /api/todoitems/{id}` - 刪除單筆項目
+- `DELETE /api/todoitems/batch` - 批次刪除（ACID Transaction）
 
 ### 安全防護
 
-- **Rate Limiting（限流）** - 每個 IP 每分鐘最多 10 次請求，防止 DDoS 攻擊和惡意刷單
+- **Rate Limiting（限流）** - 每個 IP 每分鐘最多 10 次請求
 
 ## 專案結構
 
 ```
-E-Commerce-Backend/
+PXPayBackend/
 ├── Controllers/
-│   ├── TodoItemsController.cs    # 訂單 API（CRUD + Transaction）
-│   └── ProductsController.cs     # 商品 API（Cache 優化）
+│   ├── TodoItemsController.cs    # TodoItems API（CRUD + Transaction）
+│   └── ProductsController.cs     # Products API（Cache 優化）
 ├── Services/
 │   ├── IProductService.cs        # Service 介面
 │   └── ProductService.cs         # 業務邏輯（Cache + DB 查詢）
 ├── Models/
-│   ├── TodoItem.cs               # 訂單資料結構
-│   └── Product.cs                # 商品資料結構
+│   ├── TodoItem.cs               # TodoItem 資料結構
+│   └── Product.cs                # Product 資料結構
 ├── Data/
 │   └── TodoContext.cs            # EF Core DbContext（資料庫連線）
 ├── Migrations/                   # 資料庫遷移檔案
 ├── Program.cs                    # 程式進入點（IOC/DI 設定）
 ├── appsettings.json              # 資料庫連線字串設定
-└── E-Commerce-Backend.csproj    # 專案設定檔
+└── PXPayBackend.csproj          # 專案設定檔
 ```
 
 ## 用到的技術
@@ -130,31 +120,17 @@ E-Commerce-Backend/
 
 ## 技術亮點
 
-這個專案模擬了電商系統的核心場景，展示企業級 ASP.NET Core 開發的核心技術：
+這個專案展示了企業級 ASP.NET Core 開發的核心技術：
 
-### 🚀 高流量場景優化
-
-1. **Memory Cache 效能優化** - 模擬雙 11 搶購，查詢效能提升 10,000 倍（500ms → 0.05ms）
-2. **Rate Limiting 限流保護** - 防止 DDoS 攻擊和惡意刷單，每個 IP 每分鐘最多 10 次請求
-
-### 💰 交易處理
-
-3. **ACID Transaction** - 批次取消訂單 API，確保資料一致性（原子性、一致性）
-4. **Entity Framework Core ORM** - Code First 方式管理資料庫
-
-### 🏗️ 架構設計
-
-5. **MVC + Service 分層架構** - Controller → Service → Repository，職責分離
+1. **RESTful API 設計** - 標準的 HTTP 方法和狀態碼
+2. **MVC + Service 分層架構** - Controller → Service → Repository，職責分離
+3. **Memory Cache 效能優化** - 查詢效能從 500ms 降到 0.05ms
+4. **Rate Limiting 限流保護** - 每個 IP 每分鐘最多 10 次請求
+5. **Entity Framework Core ORM** - Code First 方式管理資料庫
 6. **IOC/DI 架構模式** - Interface + Constructor Injection，鬆耦合設計
-7. **RESTful API 設計** - 標準的 HTTP 方法和狀態碼
-
-### ⚡ 程式設計
-
-8. **非同步程式設計** - 所有資料庫操作都使用 async/await
-9. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
-
-### 🔄 自動化部署
-
+7. **非同步程式設計** - 所有資料庫操作都使用 async/await
+8. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
+9. **ACID Transaction** - 批次刪除 API 展示交易處理（原子性、一致性）
 10. **CI/CD 自動化** - GitHub Actions 自動建置和測試
 
 ## 效能優化展示
@@ -166,13 +142,12 @@ E-Commerce-Backend/
 | `/stock/no-cache`   | 500ms      | 500ms      | -             |
 | `/stock` (有 Cache) | 500ms      | **0.05ms** | **10,000 倍** |
 
-**電商應用場景：**
+**說明：**
 
-- 🛒 雙 11 搶購活動
-- 📦 10 萬人同時查詢商品庫存
-- ⚡ 5 秒內的請求都從 Cache 取
-- 💾 資料庫壓力減少 99%
-- 🎯 適用於：熱門商品查詢、秒殺活動、促銷頁面
+- 第一次請求：查詢資料庫（500ms）
+- 第二次請求：從 Cache 取（0.05ms）
+- 5 秒內的請求都從 Cache 取
+- 資料庫壓力減少
 
 ### Rate Limiting 限流保護
 
