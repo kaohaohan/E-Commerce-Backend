@@ -1,8 +1,10 @@
-# PXPayBackend - Todo API
+# E-Commerce-Backend - 高流量電商後端系統
 
-這是我用 ASP.NET Core 寫的待辦事項 API，用來練習和展示完整的 CRUD 操作，並整合了 SQL Server 資料庫。
+這是我用 ASP.NET Core 開發的電商後端 API，專注在**高流量場景的效能優化**和**安全防護**，展示企業級後端開發的核心技術。
 
-> 🚀 **此專案已整合 CI/CD**，每次 push 都會自動執行編譯和測試！
+> 🚀 **技術亮點**：Memory Cache 效能優化、ACID Transaction、Rate Limiting、CI/CD 自動化部署
+
+> 💡 **適用場景**：雙 11 搶購活動、高併發商品查詢、訂單交易處理、API 安全防護
 
 ## 環境需求
 
@@ -23,8 +25,8 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
 ### 2. Clone 專案並還原套件
 
 ```bash
-git clone https://github.com/kaohaohan/PXPayBackend.git
-cd PXPayBackend
+git clone https://github.com/kaohaohan/E-Commerce-Backend.git
+cd E-Commerce-Backend
 dotnet restore
 ```
 
@@ -48,44 +50,52 @@ http://localhost:5000/swagger
 
 ## API 功能
 
-### Todo API（基本 CRUD）
+### 商品管理 API（高流量優化）
 
-- `GET /api/todoitems` - 拿所有待辦事項
-- `GET /api/todoitems/{id}` - 拿單一筆資料
-- `POST /api/todoitems` - 新增待辦事項
-- `PUT /api/todoitems/{id}` - 更新待辦事項
-- `DELETE /api/todoitems/{id}` - 刪除待辦事項
-- `DELETE /api/todoitems/batch` - 批次刪除（ACID Transaction）
-
-### Products API（高流量優化）
-
-- `GET /api/products/stock` - 查詢庫存（有 Cache，效能提升 10,000 倍）
+- `GET /api/products/stock` - 查詢商品庫存（有 Cache，效能提升 10,000 倍）
 - `GET /api/products/stock/no-cache` - 查詢庫存（沒有 Cache，用來對比）
 - `POST /api/products/init` - 初始化測試資料
 
+**適用場景：** 雙 11 搶購活動、10 萬人同時查詢庫存
+
+---
+
+### 訂單管理 API（交易處理）
+
+- `GET /api/todoitems` - 查詢所有訂單
+- `GET /api/todoitems/{id}` - 查詢單筆訂單
+- `POST /api/todoitems` - 建立訂單
+- `PUT /api/todoitems/{id}` - 更新訂單狀態
+- `DELETE /api/todoitems/{id}` - 取消單筆訂單
+- `DELETE /api/todoitems/batch` - 批次取消訂單（ACID Transaction）
+
+**適用場景：** 訂單處理、退款流程、確保資料一致性
+
+---
+
 ### 安全防護
 
-- **Rate Limiting（限流）** - 每個 IP 每分鐘最多 10 次請求，防止 DDoS 攻擊
+- **Rate Limiting（限流）** - 每個 IP 每分鐘最多 10 次請求，防止 DDoS 攻擊和惡意刷單
 
 ## 專案結構
 
 ```
-PXPayBackend/
+E-Commerce-Backend/
 ├── Controllers/
-│   ├── TodoItemsController.cs    # Todo API（CRUD + Transaction）
-│   └── ProductsController.cs     # Products API（Cache 優化）
+│   ├── TodoItemsController.cs    # 訂單 API（CRUD + Transaction）
+│   └── ProductsController.cs     # 商品 API（Cache 優化）
 ├── Services/
 │   ├── IProductService.cs        # Service 介面
 │   └── ProductService.cs         # 業務邏輯（Cache + DB 查詢）
 ├── Models/
-│   ├── TodoItem.cs               # Todo 資料結構
-│   └── Product.cs                # Product 資料結構
+│   ├── TodoItem.cs               # 訂單資料結構
+│   └── Product.cs                # 商品資料結構
 ├── Data/
 │   └── TodoContext.cs            # EF Core DbContext（資料庫連線）
 ├── Migrations/                   # 資料庫遷移檔案
 ├── Program.cs                    # 程式進入點（IOC/DI 設定）
 ├── appsettings.json              # 資料庫連線字串設定
-└── PXPayBackend.csproj          # 專案設定檔
+└── E-Commerce-Backend.csproj    # 專案設定檔
 ```
 
 ## 用到的技術
@@ -120,17 +130,31 @@ PXPayBackend/
 
 ## 技術亮點
 
-這個專案展示了企業級 ASP.NET Core 開發的核心技術：
+這個專案模擬了電商系統的核心場景，展示企業級 ASP.NET Core 開發的核心技術：
 
-1. **RESTful API 設計** - 標準的 HTTP 方法和狀態碼
-2. **MVC + Service 分層架構** - Controller → Service → Repository，職責分離
-3. **Memory Cache 效能優化** - 查詢效能提升 10,000 倍（500ms → 0.05ms）
-4. **Rate Limiting 限流保護** - 防止 DDoS 攻擊，每個 IP 每分鐘最多 10 次請求
-5. **Entity Framework Core ORM** - Code First 方式管理資料庫
+### 🚀 高流量場景優化
+
+1. **Memory Cache 效能優化** - 模擬雙 11 搶購，查詢效能提升 10,000 倍（500ms → 0.05ms）
+2. **Rate Limiting 限流保護** - 防止 DDoS 攻擊和惡意刷單，每個 IP 每分鐘最多 10 次請求
+
+### 💰 交易處理
+
+3. **ACID Transaction** - 批次取消訂單 API，確保資料一致性（原子性、一致性）
+4. **Entity Framework Core ORM** - Code First 方式管理資料庫
+
+### 🏗️ 架構設計
+
+5. **MVC + Service 分層架構** - Controller → Service → Repository，職責分離
 6. **IOC/DI 架構模式** - Interface + Constructor Injection，鬆耦合設計
-7. **非同步程式設計** - 所有資料庫操作都使用 async/await
-8. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
-9. **ACID Transaction** - 批次刪除 API 展示交易處理（原子性、一致性）
+7. **RESTful API 設計** - 標準的 HTTP 方法和狀態碼
+
+### ⚡ 程式設計
+
+8. **非同步程式設計** - 所有資料庫操作都使用 async/await
+9. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
+
+### 🔄 自動化部署
+
 10. **CI/CD 自動化** - GitHub Actions 自動建置和測試
 
 ## 效能優化展示
@@ -142,12 +166,13 @@ PXPayBackend/
 | `/stock/no-cache`   | 500ms      | 500ms      | -             |
 | `/stock` (有 Cache) | 500ms      | **0.05ms** | **10,000 倍** |
 
-**適用場景：**
+**電商應用場景：**
 
-- 高流量搶購活動
-- 10 萬人同時查詢庫存
-- 5 秒內的請求都從 Cache 取
-- 資料庫壓力減少 99%
+- 🛒 雙 11 搶購活動
+- 📦 10 萬人同時查詢商品庫存
+- ⚡ 5 秒內的請求都從 Cache 取
+- 💾 資料庫壓力減少 99%
+- 🎯 適用於：熱門商品查詢、秒殺活動、促銷頁面
 
 ### Rate Limiting 限流保護
 
@@ -156,15 +181,18 @@ PXPayBackend/
 **規則：** 每個 IP 每分鐘最多 10 次請求
 
 **測試方式：**
+
 1. 打開 Swagger：`http://localhost:5000/swagger`
 2. 選擇任一 API（例如 `GET /api/Products/stock`）
 3. 連續點擊 11 次「Execute」
 
 **預期結果：**
+
 - 前 10 次：✅ 200 OK
 - 第 11 次：❌ 429 Too Many Requests
 
 **回應訊息：**
+
 ```json
 {
   "message": "API calls quota exceeded! maximum admitted 10 per 1m."
@@ -172,6 +200,7 @@ PXPayBackend/
 ```
 
 **技術實作：**
+
 - 使用 `AspNetCoreRateLimit` 套件
 - 透過 Middleware 在請求進入 Controller 前攔截
 - 計數器存在記憶體裡，可擴展為 Redis（分散式環境）
