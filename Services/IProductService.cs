@@ -1,3 +1,5 @@
+using PXPayBackend.Models;
+
 namespace PXPayBackend.Services;
 
 /// <summary>
@@ -23,5 +25,14 @@ public interface IProductService
     /// 初始化測試資料
     /// </summary>
     Task<bool> InitTestDataAsync();
+
+
+
+   Task<bool> CreateTestProductsAsync();
+    //加查詢db
+    Task<List<Product>> GetAllProductsAsync();
+    Task<int> GetProductCountAsync();
+    Task<List<Product>> FindProductsByNameAsync(string name);
+    Task<List<Product>> FindProductsByNameStartsWithAsync(string name);
 }
 

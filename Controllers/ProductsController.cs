@@ -43,5 +43,60 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "測試資料已存在" });
         // Hint 3: 如果 false，回傳「測試資料已存在」
     }
+    [HttpPost("create-test-products")]
+    public async Task<IActionResult> CreateTestProducts()
+    {
+        var success = await _productService.CreateTestProductsAsync();
+        
+        if (success)
+        {
+            return Ok(new { message = "成功建立 1600 筆測試資料！" });
+        }
+        return Ok(new { message = "測試資料已存在" });
+    }
+    [HttpGet("count")]
+public async Task<IActionResult> GetCount()
+{
+    var count = await _productService.GetProductCountAsync();
+    return Ok(new { 總數量 = count });
+}
+
+[HttpGet("all")]
+public async Task<IActionResult> GetAll()
+{
+    var products = await _productService.GetAllProductsAsync();
+    return Ok(products);
+}
+
+
+
+[HttpGet("search/{name}")]
+public async Task<IActionResult> SearchByName(string name)
+{
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    var products = await _productService.FindProductsByNameAsync(name);
+    stopwatch.Stop();
     
+    return Ok(new { 
+        products = products,
+        數量 = products.Count,
+        查詢時間_毫秒 = stopwatch.ElapsedMilliseconds
+    });
+}
+
+//有索引 - 使用 StartsWith 可以利用索引
+[HttpGet("search-starts-with/{name}")]
+public async Task<IActionResult> SearchByNameStartsWith(string name)
+{
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    var products = await _productService.FindProductsByNameStartsWithAsync(name);
+    stopwatch.Stop();
+    
+    return Ok(new { 
+        products = products,
+        數量 = products.Count,
+        查詢時間_毫秒 = stopwatch.ElapsedMilliseconds,
+        說明 = "使用 StartsWith - 可以利用索引"
+    });
+}
 }

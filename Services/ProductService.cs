@@ -100,4 +100,71 @@ public class ProductService : IProductService
         await _context.SaveChangesAsync();
         return true;
     }
+
+
+    //創假資料到db裡
+    public async Task<bool>  CreateTestProductsAsync()  // 建立測試商品
+    {
+        //  先判斷資料是否已存在
+       var exists = await _context.Products.AnyAsync(p => p.Name.Contains("芭樂狗"));
+        if (exists) return false;  // 已經建過了，不要重複建
+    
+    var characters = new List<string>
+    {
+        "芭樂狗",
+        "旺來狗",
+        "奇異狗",
+        "香蕉狗",
+        "蘋狗",
+        "福利熊",
+        "小福",
+        "全聯先生"
+    };
+    var products = new List<Product>();
+    var random = new Random();
+    // 沒建過，就建立全部 8 個角色，每個 200 筆
+    foreach (var character in characters)  
+    {
+   for (int i = 1; i <= 12500; i++)     
+        {
+    products.Add(new Product
+    {
+        Name = $"{character}玩偶 #{i}",
+        Stock = random.Next(50, 500),
+        Price = random.Next(199, 999)
+    });
+        }
+       
+    }
+    await _context.Products.AddRangeAsync(products);
+    await _context.SaveChangesAsync();
+    return true;
+    }
+    public async Task<List<Product>> GetAllProductsAsync()
+    {
+        return await _context.Products.ToListAsync();
+    }
+
+    public async Task<int> GetProductCountAsync()
+    {
+        return await _context.Products.CountAsync();
+    }
+    
+    // 從10萬筆資料 找所有符合的產品 ex: 查找全聯先生
+    //沒index情況會回傳幾秒?
+    public async Task<List<Product>> FindProductsByNameAsync(string name)
+    {
+        return await _context.Products
+            .Where(p => p.Name.Contains(name))
+            .ToListAsync();
+           
+    }
+
+    // 使用 StartsWith 可以利用索引
+    public async Task<List<Product>> FindProductsByNameStartsWithAsync(string name)
+    {
+        return await _context.Products
+            .Where(p => p.Name.StartsWith(name))
+            .ToListAsync();
+    }
 }

@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // 注册 DbContext (IOC/DI 的核心！)
 // 当 Controller 需要 TodoContext 时，.NET 会自动注入
 builder.Services.AddDbContext<TodoContext>(options =>
-    options.UseInMemoryDatabase("TodoList"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 注册 Memory Cache（用於高流量優化）
 builder.Services.AddMemoryCache();
@@ -53,10 +53,17 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection(); // 暫時關閉 HTTPS 重定向，方便測試
 
 // 啟用 Rate Limiting 中間件
-app.UseIpRateLimiting();
+// app.UseIpRateLimiting();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// 啟動時自動建立測試資料
+using (var scope = app.Services.CreateScope())
+{
+    var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
+    await productService.CreateTestProductsAsync();
+}
 
 app.Run();
