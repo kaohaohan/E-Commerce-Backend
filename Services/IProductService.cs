@@ -34,5 +34,10 @@ public interface IProductService
     Task<int> GetProductCountAsync();
     Task<List<Product>> FindProductsByNameAsync(string name);
     Task<List<Product>> FindProductsByNameStartsWithAsync(string name);
+    
+    /// <summary>
+    /// 使用 Redis 快取的搜尋方法
+    /// </summary>
+    Task<List<Product>> FindProductsByNameCachedAsync(string name);
 }
 

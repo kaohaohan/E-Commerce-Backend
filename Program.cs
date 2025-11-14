@@ -15,6 +15,13 @@ builder.Services.AddDbContext<TodoContext>(options =>
 // 注册 Memory Cache（用於高流量優化）
 builder.Services.AddMemoryCache();
 
+// 注册 Redis 分散式快取
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "ECommerceCache_"; // 快取 Key 的前綴
+});
+
 // 注册 Rate Limiting（限流）
 builder.Services.Configure<IpRateLimitOptions>(options =>
 {
