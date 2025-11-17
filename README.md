@@ -81,7 +81,7 @@ docker run -d -p 5000:5000 ecommerce-backend
 - Application Load Balancer: 負載均衡
 - Auto Scaling: 根據流量自動擴展
 
-詳細步驟參考：DEPLOYMENT_MANUAL.md
+預計 11/20 前完成部署。詳細步驟參考：DEPLOYMENT_MANUAL.md
 
 ## License
 
