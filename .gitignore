@@ -18,4 +18,7 @@ obj/
 *.swp
 .env
 
+## 本地開發設定（含敏感資訊，不上傳）
+appsettings.Development.json
+
 INTERVIEW_GUIDE.md
