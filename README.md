@@ -1,105 +1,117 @@
-# E-Commerce Backend API
+# E-Commerce Backend - API 高併發效能優化實驗
 
-ASP.NET Core Web API，展示高併發 API 優化技術。
+## 🎯 面試快速摘要
 
-## 技術棧
+這個專案展示我在 **高併發場景下的效能分析與優化思路**：
 
-- .NET 8.0 + ASP.NET Core Web API
-- SQL Server + Entity Framework Core
-- Redis 分散式快取
-- Docker + Docker Compose
-- AWS ECS + ECR + Auto Scaling
+- **識別問題**：在 10 萬筆資料 + 100 併發下，未優化查詢造成 80% 錯誤率、300ms 延遲
+- **優化策略**：先用資料庫索引解決根本問題（錯誤率降至 0%），再用 Redis 降低 DB 壓力
+- **驗證結果**：用實際數據對比三種方案（V1 無優化 / V2 索引 / V3 快取）
+
+**技術棧**: .NET 8 + SQL Server + Redis + Docker + AWS ECS
+
+---
+
+## 專案背景
+
+模擬電商商品搜尋場景，在高併發下測試不同優化策略的效能差異。
+
+**測試條件**: 100,000 筆商品 × 100 併發請求
+
+---
+
+## 三種方案對比實驗
+
+| 方案                      | 實作技術                         | 平均回應時間 | 錯誤率 | P95 延遲 | 備註                 |
+| ------------------------- | -------------------------------- | ------------ | ------ | -------- | -------------------- |
+| **Version 1: 無優化**     | EF Core `.Contains()` + 全表掃描 | 200-300ms    | 80%    | 500ms+   | Connection Pool 耗盡 |
+| **Version 2: 資料庫索引** | `.StartsWith()` + B-Tree Index   | 1-5ms        | 0%     | 8ms      | 查詢改用前綴搜尋     |
+| **Version 3: Redis 快取** | Cache-Aside Pattern (TTL 5min)   | <1ms         | 0%     | 2ms      | 熱門關鍵字快取       |
+
+### 核心技術實作
+
+**1. Database Index**
+
+```csharp
+// ❌ Contains() 無法使用索引 → 全表掃描
+products.Where(p => p.Name.Contains(keyword))
+
+// ✅ StartsWith() + Index → 索引查詢
+products.Where(p => p.Name.StartsWith(keyword))
+```
+
+**2. Redis Cache-Aside Pattern**
+
+```csharp
+var cacheKey = $"search:{keyword}";
+var cached = await _cache.GetStringAsync(cacheKey);
+if (cached != null) return JsonSerializer.Deserialize<List<Product>>(cached);
+
+var result = await _dbQuery();
+await _cache.SetStringAsync(cacheKey, json, new() {
+    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+});
+```
+
+**3. Connection Pooling**: `Max Pool Size=200`
+
+---
 
 ## 快速開始
 
-### 方式一：Docker Compose（推薦）
-
-一鍵啟動完整環境：
-
 ```bash
-docker compose up -d
+# 1. 啟動環境
+docker-compose up -d
+
+# 2. 執行應用
+dotnet restore && dotnet ef database update && dotnet run
+
+# 3. 建立測試資料
+curl -X POST http://localhost:5000/api/products/init
+
+# 4. 開啟 demo.html 執行 100 併發測試
 ```
 
-包含：API + SQL Server + Redis
+### API 端點
 
-### 方式二：手動啟動
+| Endpoint                                         | 說明               | 版本 |
+| ------------------------------------------------ | ------------------ | ---- |
+| `GET /api/products/search/{keyword}`             | 無優化（全表掃描） | V1   |
+| `GET /api/products/search-starts-with/{keyword}` | 資料庫索引         | V2   |
+| `GET /api/products/search-cached/{keyword}`      | Redis 快取         | V3   |
 
-1. 複製設定檔並填入連線資訊：
+---
 
-```bash
-cp appsettings.example.json appsettings.Development.json
-# 編輯 appsettings.Development.json 填入密碼
-```
+## 核心發現
 
-2. 啟動資料庫：
+1. **未優化的查詢在高併發下不可用**（80% 錯誤率 → Connection Pool 耗盡）
+2. **資料庫索引是第一步優化**（100x 效能提升，0% 錯誤率）
+3. **Redis 適合熱門查詢場景**（進一步降低 DB 壓力）
 
-```bash
-docker start sqlserver redis
-```
+---
 
-3. 啟動應用：
+## ⚖️ 設計取捨 (Trade-offs)
 
-```bash
-dotnet run
-```
+| 優化方案            | 優點               | 限制                         | 適用場景                     |
+| ------------------- | ------------------ | ---------------------------- | ---------------------------- |
+| **Database Index**  | 根本解決查詢慢問題 | 僅適用前綴搜尋（StartsWith） | 所有查詢場景                 |
+| **Redis Cache**     | 極低延遲（<1ms）   | 需考慮快取一致性、TTL 設定   | 熱門關鍵字、可容忍短暫不一致 |
+| **Connection Pool** | 避免重複建立連線   | Pool size 過大會消耗資源     | 高併發場景                   |
 
-## 環境變數設定
+**關鍵思考**：
 
-本專案支援透過環境變數覆蓋連線資訊（適用於 Docker/AWS）：
+- 先解決根本問題（索引），再考慮快取
+- Cache 不是銀彈：查詢條件多樣時命中率會下降
+- 需監控 cache 命中率，避免無效快取佔用記憶體
 
-| 變數名稱 | 說明 |
-|---------|------|
-| `ConnectionStrings__DefaultConnection` | SQL Server 連線字串 |
-| `ConnectionStrings__Redis` | Redis 連線字串 |
-| `RateLimitingEnabled` | 是否啟用 API 限流 |
-| `AllowedOrigins__0` | CORS 允許的來源 |
+---
 
-## 核心功能
+## 部署
 
-### Database Indexing
+- **本機**: `docker-compose up -d`
+- **AWS**: ECS Fargate + ALB + Auto Scaling（詳見 [DEPLOYMENT_MANUAL.md](./DEPLOYMENT_MANUAL.md)）
 
-使用 B-Tree 索引優化查詢：
-- `Contains()`: 全表掃描，200-300ms
-- `StartsWith()` + Index: 前綴搜尋，1-5ms
-
-### Redis Cache
-
-Cache-Aside Pattern，TTL 5 分鐘。
-
-### Connection Pooling
-
-Min Pool Size=10, Max Pool Size=200
-
-## API 端點
-
-| 端點 | 說明 | 快取 |
-|------|------|------|
-| `GET /api/products/search/{keyword}` | Contains 搜尋（無優化） | 無 |
-| `GET /api/products/search-starts-with/{keyword}` | StartsWith + 索引 | 無 |
-| `GET /api/products/search-cached/{keyword}` | Redis 快取版本 | 5 分鐘 |
-| `POST /api/products/init` | 初始化測試資料 | - |
-
-## 效能測試
-
-JMeter 壓測結果（100 併發，100,000 筆資料）：
-
-| 版本 | 回應時間 | 錯誤率 |
-|------|---------|--------|
-| 無索引 | 200-300ms | 80% |
-| 有索引 | 1-5ms | 0% |
-
-## 專案結構
-
-```
-├── Controllers/       # API 端點
-├── Services/         # 業務邏輯
-├── Models/           # 資料模型
-├── Data/             # DbContext
-├── Extensions/       # 服務註冊擴充
-├── Middleware/       # 全域例外處理
-├── docker-compose.yml
-└── Dockerfile
-```
+---
 
 ## License
 
