@@ -10,25 +10,10 @@ public class ProductsController : ControllerBase
 {
    private readonly IProductService _productService;
 
-       public ProductsController(IProductService productService)
+    public ProductsController(IProductService productService)
     {
         _productService = productService;
     }
-
-    [HttpGet("stock")]
-    public async Task<IActionResult> GetStock()
-    {
-        var stock = await _productService.GetStockAsync();
-        return Ok(new { stock = stock }); 
-    }
-
-    [HttpGet("stock/no-cache")]
-    public async Task<IActionResult> GetStockNoCache()
-    {
-        // 呼叫 GetStockNoCacheAsync()
-         var stock = await _productService.GetStockNoCacheAsync();
-        return Ok(new { stock = stock }); 
-    }   
 
     [HttpPost("init")]
     public async Task<IActionResult> InitTestData()
@@ -41,32 +26,14 @@ public class ProductsController : ControllerBase
             return Ok(new { message = "成功" });
         }
         return Ok(new { message = "測試資料已存在" });
-        // Hint 3: 如果 false，回傳「測試資料已存在」
     }
-    [HttpPost("create-test-products")]
-    public async Task<IActionResult> CreateTestProducts()
-    {
-        var success = await _productService.CreateTestProductsAsync();
-        
-        if (success)
-        {
-            return Ok(new { message = "成功建立 1600 筆測試資料！" });
-        }
-        return Ok(new { message = "測試資料已存在" });
-    }
-    [HttpGet("count")]
-public async Task<IActionResult> GetCount()
-{
-    var count = await _productService.GetProductCountAsync();
-    return Ok(new { 總數量 = count });
-}
 
-[HttpGet("all")]
-public async Task<IActionResult> GetAll()
-{
-    var products = await _productService.GetAllProductsAsync();
-    return Ok(products);
-}
+    [HttpGet("count")]
+    public async Task<IActionResult> GetCount()
+    {
+        var count = await _productService.GetProductCountAsync();
+        return Ok(new { 總數量 = count });
+    }
 
 
 

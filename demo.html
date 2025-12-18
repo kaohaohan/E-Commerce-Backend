@@ -377,7 +377,7 @@
           {
             id: "contains",
             name: "API 1: 無優化版本",
-            endpoint: "search/全聯先生",
+            endpoint: "search/Product_0001",
             description:
               "使用 Contains() 方法，無法利用資料庫索引，需要全表掃描 100,000 筆資料",
             tags: ["Contains()", "全表掃描", "O(n)"],
@@ -386,7 +386,7 @@
           {
             id: "index",
             name: "API 2: 索引優化版本",
-            endpoint: "search-starts-with/全聯先生",
+            endpoint: "search-starts-with/Product_0001",
             description:
               "使用 StartsWith() 方法，可以利用 B-Tree 索引進行前綴搜尋",
             tags: ["StartsWith()", "B-Tree Index", "O(log n)"],
@@ -396,7 +396,7 @@
           {
             id: "redis",
             name: "API 3: Redis 快取版本",
-            endpoint: "search-cached/全聯先生",
+            endpoint: "search-cached/Product_0001",
             description:
               "使用 Redis 分散式快取 + StartsWith，第一次從 DB 讀取，後續從快取讀取",
             tags: ["Redis Cache", "Cache-Aside", "O(1)"],

@@ -3,14 +3,9 @@ using Microsoft.EntityFrameworkCore;
 namespace PXPayBackend.Models;
 
 /// <summary>
-/// 商品 Model - 高併發效能優化版本
-/// 
-/// 【效能優化重點】
-/// 1. Name 欄位建立 B-Tree 索引 (Index Attribute)
-/// 2. 支援 StartsWith 查詢時可利用索引 (O(log n))
-/// 3. Contains 查詢無法使用索引 (O(n) 全表掃描)
+/// 商品 Model -效能優化版本
 /// </summary>
-[Index(nameof(Name))]  // ← 關鍵優化：在 Name 欄位建立索引
+[Index(nameof(Name))]  // 在 Name 欄位建立索引
 public class Product
 {
     public long Id { get; set; }

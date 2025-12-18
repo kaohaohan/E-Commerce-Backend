@@ -87,20 +87,28 @@ public class ProductService : IProductService
 
     public async Task<bool> InitTestDataAsync()
     {
-        var exists = await _context.Products.AnyAsync(p => p.Name == "福利熊玩偶");
+        // 檢查是否已經有 Product_ 開頭的測試資料
+        var exists = await _context.Products.AnyAsync(p => p.Name.StartsWith("Product_"));
         if (exists)
         {
-            return false;
+            return false; // 測試資料已存在
         }
 
-        var product = new Product
-        {
-            Name = "福利熊玩偶",
-            Stock = 1000,
-            Price = 299m
-        };
+        // 建立 100,000 筆測試資料
+        var products = new List<Product>();
+        var random = new Random();
 
-        _context.Products.Add(product);
+        for (int i = 1; i <= 100000; i++)
+        {
+            products.Add(new Product
+            {
+                Name = $"Product_{i:D6}", // Product_000001, Product_000002, ...
+                Stock = random.Next(50, 500),
+                Price = random.Next(100, 1000)
+            });
+        }
+
+        await _context.Products.AddRangeAsync(products);
         await _context.SaveChangesAsync();
         return true;
     }
